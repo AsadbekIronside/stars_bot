@@ -1,0 +1,13 @@
+# Node.js bilan bog'liq fayllar
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn.lock # Agar Yarn ishlatmasangiz, bu qatorni o'chirib qo'yishingiz mumkin
+package-lock.json # Agar npm ishlatayotgan bo'lsangiz va uni versiyalashni xohlamasangiz
+
+# Log fayllar
+*.log
+
+# IDE va muharrir sozlamalari
+.vscode/
+.idea/
