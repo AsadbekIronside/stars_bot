@@ -4,7 +4,7 @@ const db = require('../db/db');
 
 class UzumbankTransactionsService extends ServiceBase {
     constructor() {
-        super(dbTables.USER_TRANSACTIONS);
+        super(dbTables.UZUMBANK_TRANSACTIONS);
     }
 
     readByUserTransactionId(user_transaction_id) {
