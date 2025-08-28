@@ -9,7 +9,9 @@ const {
 const dayjs = require('dayjs');
 const {uzumbankConfig} = require('./config');
 const uzumbankTransactionsService = require('../../service/service.uzumbankTransactions');
+const userTransactionService = require('../../service/service.transaction');
 const {transactionStatuses} = require('./enum');
+const {paymentMethods} = require('../../constant/constant.common');
 
 /**
  * Uzumbank Payment Controller
@@ -289,6 +291,11 @@ class UzumbankController {
             };
 
             await uzumbankTransactionsService.updateByUserTransactionId(serviceId, updateData);
+            await userTransactionService.updateOneById(serviceId, {
+                is_paid: true,
+                paid_at: dayjs().toDate(),
+                payment_method:paymentMethods.UZUMBANK
+            });
 
             this.returnSuccess(res, {
                 serviceId,

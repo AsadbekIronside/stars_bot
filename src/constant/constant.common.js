@@ -26,6 +26,7 @@ exports.productTypes = {
 
 exports.paymentMethods = {
     PAYME: 'payme',
+    UZUMBANK: 'uzumbak',
     STARS: 'starts',
 };
 
