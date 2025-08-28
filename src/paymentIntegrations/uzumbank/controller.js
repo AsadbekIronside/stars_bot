@@ -306,7 +306,7 @@ class UzumbankController {
                 serviceId,
                 transId,
                 status: transactionStatuses.CONFIRMED,
-                confirmTime: transactionInfo.confirmed_timestamp,
+                confirmTime: updateData.confirmed_timestamp,
                 amount: transactionInfo.amount,
             });
         }, res);
