@@ -2,11 +2,25 @@ const bot = require('./app');
 const express = require('express');
 const app = express();
 const uzumbankRoute = require('./paymentIntegrations/uzumbank/route');
+const UzumbankController = require('./paymentIntegrations/uzumbank/controller');
+const uzumbankController = new UzumbankController();
 
 app.use(express.json());
 app.use(express.static(__dirname + '/public'));
 
 app.use('/api/v1/payment/uzumbank', uzumbankRoute);
+
+app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        // JSON parsing error
+        uzumbankController.returnError(
+            res,
+            UzumbankController.ERROR_CODES.JSON_PARSING_ERROR,
+        );
+    } else {
+        next(err); // forward other errors
+    }
+});
 
 // TG BOT WEBHOOK
 const WEBHOOK_PATH = '/webhook';
