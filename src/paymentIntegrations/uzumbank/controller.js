@@ -169,6 +169,7 @@ class UzumbankController {
         try {
             await operation();
         } catch (error) {
+            console.log(error);
             logError('Database operation failed:', error);
             this.returnError(res, UzumbankController.ERROR_CODES.DATA_VERIFICATION_ERROR);
         }
