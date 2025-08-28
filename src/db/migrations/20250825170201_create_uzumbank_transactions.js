@@ -19,23 +19,23 @@ module.exports.up = knex => {
         t.integer('account_id').unsigned().notNullable();
         t.string('phone_number', 50).nullable();
         t.uuid('transaction_id').notNullable();
-        t.bigInteger('amount').unsigned().notNullable();
-        t.bigInteger('created_timestamp_req').unsigned().notNullable();
-        t.bigInteger('created_timestamp')
+        t.integer('amount').unsigned().notNullable();
+        t.integer('created_timestamp_req').unsigned().notNullable();
+        t.integer('created_timestamp')
             .unsigned()
             .notNullable()
             .defaultTo(knex.raw('UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000'));
 
         // confirm
-        t.bigInteger('confirmed_timestamp_req').unsigned().nullable();
-        t.bigInteger('confirmed_timestamp').unsigned().nullable();
+        t.integer('confirmed_timestamp_req').unsigned().nullable();
+        t.integer('confirmed_timestamp').unsigned().nullable();
         t.string('payment_source').nullable();
         t.string('tariff').nullable();
         t.string('processing_reference_number').nullable();
 
         // cancel
-        t.bigInteger('cancelled_timestamp_req').unsigned().nullable();
-        t.timestamp('cancelled_timestamp').unsigned().nullable();
+        t.integer('cancelled_timestamp_req').unsigned().nullable();
+        t.integer('cancelled_timestamp').unsigned().nullable();
 
         // indexes
         t.index('transaction_id');

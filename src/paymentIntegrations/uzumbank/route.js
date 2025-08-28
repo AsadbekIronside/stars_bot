@@ -12,9 +12,16 @@ route.post('/confirm', uzumbankController.confirmPaymentTransaction.bind(uzumban
 route.post('/cancel', uzumbankController.cancelPaymentTransaction.bind(uzumbankController));
 route.post('/status', uzumbankController.statusPaymentTransaction.bind(uzumbankController));
 
-route.use((err, req, res) => {
-    uzumbankController.returnError(res, UzumbankController.ERROR_CODES.JSON_PARSING_ERROR);
+route.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        // JSON parsing error
+        uzumbankController.returnError(
+            res,
+            UzumbankController.ERROR_CODES.JSON_PARSING_ERROR
+        );
+    } else {
+        next(err); // forward other errors
+    }
 });
-
 
 module.exports = route;
