@@ -235,6 +235,7 @@ class UzumbankController {
                     ...transactionData,
                     user_transaction_id: serviceId,
                     created_timestamp_req: timestamp,
+                    created_timestamp: dayjs().valueOf(),
                 });
 
                 // Fetch the created transaction
@@ -294,7 +295,7 @@ class UzumbankController {
             await userTransactionService.updateOneById(serviceId, {
                 is_paid: true,
                 paid_at: dayjs().toDate(),
-                payment_method:paymentMethods.UZUMBANK
+                payment_method: paymentMethods.UZUMBANK,
             });
 
             this.returnSuccess(res, {

@@ -21,10 +21,7 @@ module.exports.up = knex => {
         t.uuid('transaction_id').notNullable();
         t.integer('amount').unsigned().notNullable();
         t.integer('created_timestamp_req').unsigned().notNullable();
-        t.integer('created_timestamp')
-            .unsigned()
-            .notNullable()
-            .defaultTo(knex.raw('UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000'));
+        t.integer('created_timestamp').unsigned().notNullable();
 
         // confirm
         t.integer('confirmed_timestamp_req').unsigned().nullable();
