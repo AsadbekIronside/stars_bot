@@ -20,19 +20,19 @@ module.exports.up = knex => {
         t.string('phone_number', 50).nullable();
         t.uuid('transaction_id').notNullable();
         t.integer('amount').unsigned().notNullable();
-        t.integer('created_timestamp_req').unsigned().notNullable();
-        t.integer('created_timestamp').unsigned().notNullable();
+        t.bigint('created_timestamp_req').unsigned().notNullable();
+        t.bigint('created_timestamp').unsigned().notNullable();
 
         // confirm
-        t.integer('confirmed_timestamp_req').unsigned().nullable();
-        t.integer('confirmed_timestamp').unsigned().nullable();
+        t.bigint('confirmed_timestamp_req').unsigned().nullable();
+        t.bigint('confirmed_timestamp').unsigned().nullable();
         t.string('payment_source').nullable();
         t.string('tariff').nullable();
         t.string('processing_reference_number').nullable();
 
         // cancel
-        t.integer('cancelled_timestamp_req').unsigned().nullable();
-        t.integer('cancelled_timestamp').unsigned().nullable();
+        t.bigint('cancelled_timestamp_req').unsigned().nullable();
+        t.bigint('cancelled_timestamp').unsigned().nullable();
 
         // indexes
         t.index('transaction_id');
