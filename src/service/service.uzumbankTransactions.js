@@ -20,7 +20,7 @@ class UzumbankTransactionsService extends ServiceBase {
     }
 
     updateByUserTransactionId(user_transaction_id, data) {
-        return db(dbTables.USER_TRANSACTIONS)
+        return db(dbTables.UZUMBANK_TRANSACTIONS)
             .update(data)
             .where('user_transaction_id', user_transaction_id);
     }
