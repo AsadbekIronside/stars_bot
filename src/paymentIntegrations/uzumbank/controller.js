@@ -236,7 +236,7 @@ class UzumbankController {
                     user_transaction_id: serviceId,
                     created_timestamp_req: timestamp,
                     created_timestamp: dayjs().valueOf(),
-                }).catch(console.error);
+                });
 
                 // Fetch the created transaction
                 transactionInfo = await uzumbankTransactionsService.readByUserTransactionId(serviceId);
