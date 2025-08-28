@@ -281,6 +281,10 @@ class UzumbankController {
 
             if (!this.validateTransactionState(transactionInfo, res)) return;
 
+            if (!transactionInfo.id) {
+                return this.returnError(res, UzumbankController.ERROR_CODES.DATA_VERIFICATION_ERROR);
+            }
+
             const updateData = {
                 current_status: transactionStatuses.CONFIRMED,
                 confirmed_timestamp_req: timestamp,
@@ -323,6 +327,10 @@ class UzumbankController {
             const transactionInfo = await uzumbankTransactionsService.readByUserTransactionId(serviceId);
 
             if (!this.validateTransactionState(transactionInfo, res)) return;
+
+            if (!transactionInfo.id) {
+                return this.returnError(res, UzumbankController.ERROR_CODES.DATA_VERIFICATION_ERROR);
+            }
 
             const cancelledTimestamp = dayjs().valueOf();
             const updateData = {
