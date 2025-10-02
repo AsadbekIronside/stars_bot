@@ -1,13 +1,13 @@
-const { Telegraf } = require('telegraf');
+const {Telegraf} = require('telegraf');
 const RedisSession = require('telegraf-session-redis');
 
 const updateHandler = require('./middleware/middleware.updateHandler');
 const checkMembership = require('./middleware/middleware.checkMembership');
-const { BOT_TOKEN, DEFAULT_LANGUAGE } = require('./config');
+const {BOT_TOKEN, DEFAULT_LANGUAGE} = require('./config');
 const BotMain = require('./bot/bot.main');
 const path = require('path');
-const { errorHandler } = require('./middleware/middleware.errorHandler');
-const { createI18nMiddleware } = require('./libs/i18n');
+const {errorHandler} = require('./middleware/middleware.errorHandler');
+const {createI18nMiddleware} = require('./libs/i18n');
 
 const bot = new Telegraf(BOT_TOKEN);
 

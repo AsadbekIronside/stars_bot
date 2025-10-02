@@ -8,4 +8,5 @@ module.exports.dbTables = {
     USER_TRANSACTIONS: 'tb_user_transactions',
     BONUS_PAYMENT: 'tb_bonus_payment',
     UZUMBANK_TRANSACTIONS: 'tb_uzumbank_transactions',
+    CLICK_TRANSACTIONS: 'tb_click_transactions',
 };
