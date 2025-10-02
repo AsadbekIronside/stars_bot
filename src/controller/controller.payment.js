@@ -9,8 +9,12 @@ const serviceBonuses = require('../service/service.bonus');
 const serviceUserBonuses = require('../service/service.userBonus');
 const {helpersStars} = require('../helpers');
 const uiMain = require('../ui/ui.main');
-const {createI18n} = require('../libs/i18n');
 const path = require('node:path');
+const {createStandaloneTranslator} = require('../libs/i18n');
+
+const translator = createStandaloneTranslator({
+    directory: path.join(__dirname, '../locales'),
+});
 
 class ControllerPayment {
     async #paymentForStars(t, transactionInfo) {
@@ -184,6 +188,7 @@ class ControllerPayment {
         }
     }
 
+
     async acceptPaymentClick(trans_id) {
         let transactionInfo = await serviceTransaction.readWithUserInfo(trans_id);
         if (!transactionInfo) {
@@ -198,17 +203,20 @@ class ControllerPayment {
                 paid_at: db.fn.now(),
             });
 
-            // Create i18n instance for user's language
-            const userI18n = createI18n({
-                defaultLocale: transactionInfo.lang || DEFAULT_LANGUAGE,
-                directory: path.join(__dirname, '../locales'),
-            });
+            // Get user's language
+            const userLang = transactionInfo.lang || DEFAULT_LANGUAGE;
 
             // Process payment based on type
             if (transactionInfo.is_for === productTypes.STARS) {
-                result = await this.#paymentForStars(userI18n.t.bind(userI18n), transactionInfo);
+                result = await this.#paymentForStars(
+                    (key, vars) => translator.t(userLang, key, vars),
+                    transactionInfo,
+                );
             } else {
-                result = await this.#paymentForPremium(userI18n.t.bind(userI18n), transactionInfo);
+                result = await this.#paymentForPremium(
+                    (key, vars) => translator.t(userLang, key, vars),
+                    transactionInfo,
+                );
             }
 
             const {resp, message} = result;
@@ -239,15 +247,9 @@ class ControllerPayment {
             await serviceTransaction.updateOneById(trans_id, data);
             transactionInfo = await serviceTransaction.readWithUserInfo(trans_id);
 
-            // Create i18n instance for admin notifications (group language)
-            const adminI18n = createI18n({
-                defaultLocale: GROUP_MESSAGES_LANGUAGE,
-                directory: path.join(__dirname, '../locales'),
-            });
-
-            // Send order notification to channel
+            // Send order notification to channel (in group language)
             await helpersTelegram.sendOrderToChannel(
-                adminI18n.t.bind(adminI18n),
+                (key, vars) => translator.t(GROUP_MESSAGES_LANGUAGE, key, vars),
                 transactionInfo,
                 data['is_done'] ? statuses.SUCCESS : statuses.FAILED,
                 true,
@@ -258,26 +260,17 @@ class ControllerPayment {
         } catch (e) {
             logError(e.toString());
 
-            // Create i18n instances for error messages
-            const userI18n = createI18n({
-                defaultLocale: transactionInfo?.lang || DEFAULT_LANGUAGE,
-                directory: path.join(__dirname, '../locales'),
-            });
-
-            const adminI18n = createI18n({
-                defaultLocale: GROUP_MESSAGES_LANGUAGE,
-                directory: path.join(__dirname, '../locales'),
-            });
+            const userLang = transactionInfo?.lang || DEFAULT_LANGUAGE;
 
             // Send error message to user
-            const text = userI18n.t('failed_purchase_text_for_user');
+            const text = translator.t(userLang, 'failed_purchase_text_for_user');
             await helpersTelegram.sendMessageToUser(
                 transactionInfo.chat_id,
                 text,
             );
 
             // Send detailed error to admin group
-            const adminText = adminI18n.t('failed_purchase_text_for_admin', {
+            const adminText = translator.t(GROUP_MESSAGES_LANGUAGE, 'failed_purchase_text_for_admin', {
                 trans_id: transactionInfo.id,
                 buyer_id: transactionInfo.user_id,
                 buyer_name: [

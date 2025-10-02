@@ -3,7 +3,7 @@ const path = require('path');
 
 function createI18nMiddleware(options = {}) {
     const {
-        defaultLocale = 'en',
+        defaultLocale = 'uz',
         directory = path.join(__dirname, 'locales'),
     } = options;
 
@@ -55,4 +55,46 @@ function createI18nMiddleware(options = {}) {
     };
 }
 
-module.exports = {createI18nMiddleware};
+function createStandaloneTranslator(options = {}) {
+    const {
+        defaultLocale = 'uz',
+        directory = path.join(__dirname, 'locales'),
+    } = options;
+
+    const locales = {};
+
+    // Load all locale files
+    function loadLocales() {
+        const files = fs.readdirSync(directory);
+        files.forEach((file) => {
+            const locale = path.basename(file, '.json');
+            const content = fs.readFileSync(path.join(directory, file), 'utf8');
+            locales[locale] = JSON.parse(content);
+        });
+    }
+
+    loadLocales();
+
+    // Translate function
+    function translate(locale, key, vars = {}) {
+        const messages = locales[locale] || locales[defaultLocale] || {};
+        let text = messages[key] || key;
+
+        Object.entries(vars).forEach(([k, v]) => {
+            text = text.replace(`{{${k}}}`, String(v));
+        });
+
+        return text;
+    }
+
+    return {
+        translate,
+        t: translate, // Alias for convenience
+        getAvailableLanguages: () => Object.keys(locales),
+        reloadLocales: loadLocales,
+        hasLocale: (locale) => locales.hasOwnProperty(locale),
+        getLocaleData: (locale) => locales[locale] || null,
+    };
+}
+
+module.exports = {createI18nMiddleware, createStandaloneTranslator};
