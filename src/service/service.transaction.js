@@ -32,6 +32,10 @@ class ServiceTransaction extends ServiceBase {
             .insert(data)
             .then(([rowId]) => this.readWithUserInfo(rowId));
     }
+
+    readTransIdFromToken(token) {
+        return db(dbTables.USER_TRANSACTIONS).select('id').where({ token: token }).first()
+    }
 }
 
 module.exports = new ServiceTransaction();

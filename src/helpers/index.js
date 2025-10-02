@@ -5,4 +5,5 @@ module.exports = {
     helpersStars: require('../helpers/helpers.stars'),
     helpersTelegram: require('../helpers/helpers.telegram'),
     helpersUser: require('../helpers/helpers.user'),
+    helpersCrypto: require('../helpers/helpers.crypto'),
 };

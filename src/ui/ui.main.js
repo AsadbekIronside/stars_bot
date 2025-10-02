@@ -36,6 +36,7 @@ class UiMain {
             [Markup.button.callback('🇺🇿 O\'zbekcha', `lang.uz`)],
             [Markup.button.callback('🇷🇺 Русский', `lang.ru`)],
             [Markup.button.callback('🇬🇧 English', `lang.en`)],
+            [Markup.button.callback('🇺🇿 Qaraqalpaqsha', `lang.kaa`)],
         ];
 
         await ctx.replyWithHTML(

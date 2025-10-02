@@ -1,17 +1,34 @@
 const helpersTelegram = require('../helpers/helpers.telegram');
 const uiMain = require('../ui/ui.main');
 const serviceUsers = require('../service/service.user');
+const serviceTransaction = require('../service/service.transaction');
 
 const controllerMain = require('../controller/controller.main');
 const controllerAdmin = require('../controller/controller.admin');
 const controllerUser = require('../controller/controller.user');
 const controllerPayment = require('../controller/controller.payment');
 const { userSteps } = require('../constant/constant.userSteps');
-const { receivedUsernameFor } = require('../constant/constant.common');
+const { receivedUsernameFor, paymentMethods } = require('../constant/constant.common');
 
 class BotMain {
     constructor(bot) {
         bot.command('start', async (ctx) => {
+            const start = ctx.message.text.split(' ');
+
+            // if (start.length > 1 && start[1].startsWith('tx')) {
+            //     const transToken = start[1].split('_')[1];
+            //     const transInfo = await serviceTransaction.readTransIdFromToken(transToken)
+
+            //     if (transInfo) {
+            //         await controllerPayment.acceptPayment(ctx, {
+            //             trans_id: transInfo.id,
+            //             payment_method: paymentMethods.CLICK
+            //         });
+
+            //         return
+            //     }
+            // }
+
             await uiMain.menu(ctx, 'hello');
         });
 

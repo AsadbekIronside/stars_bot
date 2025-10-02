@@ -5,7 +5,7 @@ module.exports = {
 
     ADMIN_ID: 1419565211,
 
-    CHATS_TO_SUBSCRIBE: [{id: '@uzs_stars', link: 'https://t.me/uzs_stars'}],
+    CHATS_TO_SUBSCRIBE: [{ id: '@uzs_stars', link: 'https://t.me/uzs_stars' }],
     GROUP_ID: -1002616272122,
     ORDERS_CHANNEL_ID: -1002506345046,
 
@@ -42,6 +42,13 @@ module.exports = {
             INVOICE_LIVE_TOKEN: '387026696:LIVE:685ec86715461d903a41d64d',
         },
         CALLBACK_URL: 'https://uzsstars.uz/api/v1/payment/result',
+        click: {
+            BASE_URL: "https://my.click.uz/services/pay",
+            SERVICE_ID: 82879,
+            MERCHANT_ID: 46106,
+            MERCHANT_USER_ID: 64076,
+            SECRET_KEY: "zbYSWtAUKMxED",
+        }
     },
     BONUS_PER_REFERRAL: 4,
     BALANCE_RETRIEVE_OPTIONS: [75, 100, 125, 150],

@@ -94,12 +94,12 @@ class ControllerPayment {
 
     async acceptPayment(ctx, {
         trans_id,
-        tg_payment_id,
+        tg_payment_id = null,
         payment_method = paymentMethods.PAYME
     }) {
 
         let transactionInfo = await serviceTransaction.readWithUserInfo(trans_id);
-        if (!transactionInfo || transactionInfo.tg_payment_id === tg_payment_id) {
+        if (!transactionInfo || (payment_method === paymentMethods.PAYME && transactionInfo.tg_payment_id === tg_payment_id)) {
             return
         }
 

@@ -28,6 +28,7 @@ exports.paymentMethods = {
     PAYME: 'payme',
     UZUMBANK: 'uzumbak',
     STARS: 'starts',
+    CLICK: "click"
 };
 
 exports.statuses = {
@@ -36,8 +37,8 @@ exports.statuses = {
     FAILED: 'failed',
 };
 
-exports.receivedUsernameFor={
-    STARS:"stars",
-    PREMIUM:"premium",
+exports.receivedUsernameFor = {
+    STARS: "stars",
+    PREMIUM: "premium",
     RETRIEVE_BALANCE: "retrive_balance",
 }

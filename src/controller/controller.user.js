@@ -9,7 +9,7 @@ const uiUser = require('../ui/ui.user');
 
 const { starsQuantitySchema } = require('../validations/validations.main');
 const { stars, GROUP_ID, GROUP_MESSAGES_LANGUAGE, BALANCE_RETRIEVE_OPTIONS } = require('../config');
-const { helpersCommon, helpersHttp, helpersUser, helpersTelegram } = require('../helpers');
+const { helpersCommon, helpersHttp, helpersUser, helpersTelegram, helpersCrypto } = require('../helpers');
 const { userSteps } = require('../constant/constant.userSteps');
 const uiMain = require('../ui/ui.main');
 const { productTypes, receivedUsernameFor } = require('../constant/constant.common');
@@ -191,6 +191,7 @@ class ControllerUser {
             quantity: stars,
             payment_amount: paymentAmount,
             receiver: username,
+            token: helpersCrypto.generateToken()
         });
 
         const repliedMessage = await uiUser.payForStars(ctx, transaction, should_edit);
