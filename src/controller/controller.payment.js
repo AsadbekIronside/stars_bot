@@ -191,7 +191,7 @@ class ControllerPayment {
 
     async acceptPaymentClick(trans_id) {
         let transactionInfo = await serviceTransaction.readWithUserInfo(trans_id);
-        if (!transactionInfo) {
+        if (!transactionInfo || transactionInfo.is_done === 1) {
             return;
         }
 
