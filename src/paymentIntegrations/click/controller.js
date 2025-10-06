@@ -1,8 +1,8 @@
 const serviceClickTransaction = require('../../service/service.clickTransactions');
-const { statusTypes } = require('./enum');
+const {statusTypes} = require('./enum');
 const dayjs = require('dayjs');
 const paymentController = require('../../controller/controller.payment');
-const { logError } = require('../../logs/logs');
+const {logError} = require('../../logs/logs');
 
 class ClickPaymentController {
     static ERROR_CODES = {
@@ -165,10 +165,15 @@ class ClickPaymentController {
                 return;
             }
 
+            await serviceClickTransaction.updateOneById(merchant_prepare_id, {
+                current_status: statusTypes.CONFIRMED,
+                completed_at: dayjs().toDate(),
+            });
+
             res.json({
                 click_trans_id,
                 merchant_trans_id,
-                merchant_confirm_id: merchant_prepare_id,
+                merchant_confirm_id: null,
                 error: ClickPaymentController.ERROR_CODES.SUCCESS,
                 error_note: 'Success',
             });

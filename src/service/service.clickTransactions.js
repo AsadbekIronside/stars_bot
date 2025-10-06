@@ -23,6 +23,7 @@ class ClickTransactionsService extends ServiceBase {
 
     createOrUpdate(data) {
         return db(dbTables.CLICK_TRANSACTIONS)
+            .insert(data)
             .onConflict('user_transaction_id')
             .merge();
     }
