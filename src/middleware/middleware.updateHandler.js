@@ -4,8 +4,8 @@ const uiMain = require('../ui/ui.main');
 const serviceReferrals = require('../service/service.referral');
 const serviceUserBonus = require('../service/service.userBonus');
 const controllerMain = require('../controller/controller.main');
-const { GROUP_ID, BONUS_PER_REFERRAL } = require('../config');
-const { bonusPurposeTypes } = require('../constant/constant.common');
+const {GROUP_ID, BONUS_PER_REFERRAL} = require('../config');
+const {bonusPurposeTypes} = require('../constant/constant.common');
 
 const setLanguage = ctx => {
     if (ctx.session?.user?.lang) {
@@ -87,7 +87,7 @@ module.exports = async (ctx, next) => {
     }
 
     if (ctx.session.user?.id && [723, 1433].includes(ctx.session.user.id)) {
-        return
+        return;
     }
 
     return next();
