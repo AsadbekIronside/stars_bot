@@ -69,9 +69,9 @@ class HelpersUser {
             [
                 Markup.button.url(t('pay_by_card'), link),
             ],
-            [
-                Markup.button.url(t('pay_by_click'), clickLink),
-            ]
+            // [
+            //     Markup.button.url(t('pay_by_click'), clickLink),
+            // ]
         ];
     }
 
