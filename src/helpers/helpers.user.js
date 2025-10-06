@@ -1,7 +1,7 @@
 const dayjs = require('dayjs');
-const { TIMESTAMP_FORMAT, BOT_NAME, paymentSystems, BONUS_PER_REFERRAL, BOT_USERNAME } = require('../config');
-const { Markup } = require('telegraf');
-const { productTypes } = require('../constant/constant.common');
+const {TIMESTAMP_FORMAT, BOT_NAME, paymentSystems, BONUS_PER_REFERRAL, BOT_USERNAME} = require('../config');
+const {Markup} = require('telegraf');
+const {productTypes} = require('../constant/constant.common');
 const helpersCommon = require('./helpers.common');
 
 class HelpersUser {
@@ -44,12 +44,12 @@ class HelpersUser {
         const quantity = helpersCommon.formatNumber(order.quantity);
 
         const product = order.is_for === productTypes.PREMIUM
-            ? t('quantity_premium', { months: quantity })
-            : t('quantity_stars', { quantity });
+            ? t('quantity_premium', {months: quantity})
+            : t('quantity_stars', {quantity});
 
         const link = await ctx.telegram.createInvoiceLink({
             title: BOT_NAME,
-            description: t('order', { order: product }),
+            description: t('order', {order: product}),
             payload: order.id,
             provider_token: paymentSystems.payme.INVOICE_LIVE_TOKEN,
             currency: 'UZS',
@@ -69,9 +69,9 @@ class HelpersUser {
             [
                 Markup.button.url(t('pay_by_card'), link),
             ],
-            // [
-            //     Markup.button.url(t('pay_by_click'), clickLink),
-            // ]
+            [
+                Markup.button.url(t('pay_by_click'), clickLink),
+            ],
         ];
     }
 
