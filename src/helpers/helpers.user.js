@@ -63,15 +63,15 @@ class HelpersUser {
             need_phone_number: false,
         });
 
-        const clickLink = `${paymentSystems.click.BASE_URL}?service_id=${paymentSystems.click.SERVICE_ID}&merchant_id=${paymentSystems.click.MERCHANT_ID}&merchant_user_id=${paymentSystems.click.MERCHANT_USER_ID}&amount=${order.payment_amount}&transaction_param=${order.id}&return_url=https://t.me/${BOT_USERNAME}?start=tx_${order.token}`;
+        const clickLink = `${paymentSystems.click.BASE_URL}?service_id=${paymentSystems.click.SERVICE_ID}&merchant_id=${paymentSystems.click.MERCHANT_ID}&merchant_user_id=${paymentSystems.click.MERCHANT_USER_ID}&amount=${order.payment_amount}&transaction_param=${order.id}&return_url=https://t.me/${BOT_USERNAME}?start=`;
 
         return [
             [
                 Markup.button.url(t('pay_by_card'), link),
             ],
-            // [
-            //     Markup.button.url(t('pay_by_click'), clickLink),
-            // ]
+            [
+                Markup.button.url(t('pay_by_click'), clickLink),
+            ]
         ];
     }
 

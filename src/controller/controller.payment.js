@@ -17,20 +17,15 @@ const translator = createStandaloneTranslator({
 });
 
 class ControllerPayment {
+    /**
+     * Common helper: process bonuses for STARS payment
+     */
     async #paymentForStars(t, transactionInfo) {
-        const resp = await helpersHttp.getStars(
-            transactionInfo.receiver,
-            transactionInfo.quantity,
-        );
+        const resp = await helpersHttp.getStars(transactionInfo.receiver, transactionInfo.quantity);
 
-        const matchingUserBonus = await serviceBonuses.readBonusMatchingStars(
-            transactionInfo.quantity,
-        );
-
-        const userBonus = helpersStars.calculateBonus(
-            transactionInfo.quantity,
-            matchingUserBonus,
-        );
+        // Direct bonus
+        const matchingUserBonus = await serviceBonuses.readBonusMatchingStars(transactionInfo.quantity);
+        const userBonus = helpersStars.calculateBonus(transactionInfo.quantity, matchingUserBonus);
 
         if (userBonus > 0) {
             await serviceUserBonuses.create({
@@ -41,16 +36,14 @@ class ControllerPayment {
             });
         }
 
+        // Referral bonus
         if (transactionInfo.sender_id) {
             const matchingRefBonus = await serviceBonuses.readBonusMatchingStars(
                 transactionInfo.quantity,
                 bonusPurposeTypes.REFERRAL,
             );
 
-            const refBonus = helpersStars.calculateBonus(
-                transactionInfo.quantity,
-                matchingRefBonus,
-            );
+            const refBonus = helpersStars.calculateBonus(transactionInfo.quantity, matchingRefBonus);
 
             if (refBonus > 0) {
                 await serviceUserBonuses.create({
@@ -60,236 +53,146 @@ class ControllerPayment {
                     source: bonusPurposeTypes.REFERRAL,
                 });
 
-                await helpersTelegram.sendMessageToUser(
-                    transactionInfo.sender_chat_id,
-                    t('referral_sender_bonus', {
-                        buyer_name: [transactionInfo.first_name, transactionInfo.last_name].filter(Boolean).join(' '),
-                        stars: refBonus,
-                    }),
-                ).catch(e => logError(e.toString()));
+                await helpersTelegram
+                    .sendMessageToUser(
+                        transactionInfo.sender_chat_id,
+                        t('referral_sender_bonus', {
+                            buyer_name: [transactionInfo.first_name, transactionInfo.last_name].filter(Boolean).join(' '),
+                            stars: refBonus,
+                        }),
+                    )
+                    .catch((e) => logError(e.toString()));
             }
         }
 
-        const message = t('stars_given_success', {
-            lng: transactionInfo.lang,
-            quantity: transactionInfo.quantity,
-        });
-
         return {
-            message,
             resp,
+            message: t('stars_given_success', {lng: transactionInfo.lang, quantity: transactionInfo.quantity}),
         };
     }
 
+    /**
+     * Common helper: process PREMIUM payment
+     */
     async #paymentForPremium(t, transactionInfo) {
-        const resp = await helpersHttp.getPremium(
-            transactionInfo.receiver,
-            transactionInfo.quantity,
-        );
-
-        const message = t('premium_given_success', {
-            lng: transactionInfo.lang,
-            months: transactionInfo.quantity,
-        });
-
+        const resp = await helpersHttp.getPremium(transactionInfo.receiver, transactionInfo.quantity);
         return {
-            message,
             resp,
+            message: t('premium_given_success', {lng: transactionInfo.lang, months: transactionInfo.quantity}),
         };
     }
 
-    async acceptPayment(ctx, {
-        trans_id,
-        tg_payment_id = null,
-        payment_method = paymentMethods.PAYME,
-    }) {
+    /**
+     * Helper: finalize transaction update and channel notifications
+     */
+    async #finalizeTransaction(transactionInfo, resp, t, lang) {
+        const data = {
+            transaction_id: resp.transaction_id || null,
+            is_done: resp.ok,
+            ...(resp.ok ? {done_at: db.fn.now()} : {}),
+        };
 
-        let transactionInfo = await serviceTransaction.readWithUserInfo(trans_id);
+        await serviceTransaction.updateOneById(transactionInfo.id, data);
+        transactionInfo = await serviceTransaction.readWithUserInfo(transactionInfo.id);
+
+        await helpersTelegram.sendOrderToChannel(
+            (key, vars) => translator.t(GROUP_MESSAGES_LANGUAGE, key, vars),
+            transactionInfo,
+            data.is_done ? statuses.SUCCESS : statuses.FAILED,
+            true,
+        );
+    }
+
+    /**
+     * Unified payment processor
+     */
+    async #processPayment(transactionInfo, t, paymentMethod, tg_payment_id = null, ctx = null) {
+        try {
+            // update base payment info
+            await serviceTransaction.updateOneById(transactionInfo.id, {
+                payment_method: paymentMethod,
+                is_paid: true,
+                paid_at: db.fn.now(),
+                ...(tg_payment_id && {tg_payment_id}),
+            });
+
+            // run type-specific flow
+            const result =
+                transactionInfo.is_for === productTypes.STARS
+                    ? await this.#paymentForStars(t, transactionInfo)
+                    : await this.#paymentForPremium(t, transactionInfo);
+
+            const {resp, message} = result;
+
+            // Send user notification
+            if (ctx) {
+                await uiMain.menu(ctx, message); // For PAYME
+            } else {
+                await helpersTelegram.sendMessageToUser(transactionInfo.chat_id, message); // For CLICK
+            }
+
+            // Delete old payment message
+            await helpersTelegram
+                .deleteMessage(transactionInfo.chat_id, transactionInfo.user_message_id)
+                .catch((e) => logError(e.toString()));
+
+            // Finalize transaction
+            await this.#finalizeTransaction(transactionInfo, resp, t, transactionInfo.lang);
+
+            return true;
+        } catch (e) {
+            logError(e.toString());
+
+            const lang = transactionInfo?.lang || DEFAULT_LANGUAGE;
+            const userT = (key, vars) => (ctx ? ctx.i18n.t(key, vars) : translator.t(lang, key, vars));
+
+            // Notify user
+            await helpersTelegram.sendMessageToUser(transactionInfo.chat_id, userT('failed_purchase_text_for_user'));
+
+            // Notify admins
+            const adminText = translator
+                .t(GROUP_MESSAGES_LANGUAGE, 'failed_purchase_text_for_admin', {
+                    trans_id: transactionInfo.id,
+                    buyer_id: transactionInfo.user_id,
+                    buyer_name: [transactionInfo.first_name, transactionInfo.last_name, transactionInfo.username]
+                        .filter(Boolean)
+                        .join(' '),
+                    order: transactionInfo.is_for,
+                    quantity: transactionInfo.quantity,
+                    price: transactionInfo.payment_amount,
+                    receiver: transactionInfo.receiver,
+                })
+                .concat(`\n\n⚠️ Error: ${e.toString()}`);
+
+            await helpersTelegram.sendMessageToUser(GROUP_ID, adminText);
+
+            return false;
+        }
+    }
+
+    /**
+     * Accept Payme payment
+     */
+    async acceptPayment(ctx, {trans_id, tg_payment_id = null, payment_method = paymentMethods.PAYME}) {
+        const transactionInfo = await serviceTransaction.readWithUserInfo(trans_id);
         if (!transactionInfo || (payment_method === paymentMethods.PAYME && transactionInfo.tg_payment_id === tg_payment_id)) {
             return;
         }
 
-        const t = ctx.i18n.t;
-        let result;
-        try {
-            await serviceTransaction.updateOneById(trans_id, {
-                payment_method,
-                is_paid: true,
-                paid_at: db.fn.now(),
-                tg_payment_id,
-            });
-
-            if (transactionInfo.is_for === productTypes.STARS) {
-                result = await this.#paymentForStars(t, transactionInfo);
-
-            } else {
-                result = await this.#paymentForPremium(t, transactionInfo);
-            }
-
-            const {resp, message} = result;
-
-            const data = {
-                transaction_id: resp.transaction_id || null,
-                is_done: false,
-            };
-
-            if (resp.ok) {
-                data['is_done'] = true;
-                data['done_at'] = db.fn.now();
-            }
-
-            // send result to user
-            await uiMain.menu(ctx, message);
-
-            // delete payment message
-            await helpersTelegram.deleteMessage(
-                transactionInfo.chat_id,
-                transactionInfo.user_message_id,
-            ).catch(e => logError(e.toString()));
-
-            await serviceTransaction.updateOneById(trans_id, data);
-            transactionInfo = await serviceTransaction.readWithUserInfo(trans_id);
-
-            const lang = ctx.i18n.language;
-            await ctx.i18n.changeLanguage(GROUP_MESSAGES_LANGUAGE);
-
-            await helpersTelegram.sendOrderToChannel(
-                t,
-                transactionInfo,
-                data['is_done'] ? statuses.SUCCESS : statuses.FAILED,
-                true,
-            );
-
-            await ctx.i18n.changeLanguage(lang);
-
-        } catch (e) {
-            logError(e.toString());
-
-            const text = t('failed_purchase_text_for_user');
-            await helpersTelegram.sendMessageToUser(
-                transactionInfo.chat_id,
-                text,
-            );
-
-            const adminText = t('failed_purchase_text_for_admin', {
-                trans_id: transactionInfo.id,
-                buyer_id: transactionInfo.user_id,
-                buyer_name: [transactionInfo.first_name, transactionInfo.last_name, transactionInfo.username].filter(Boolean).join(' '),
-                order: transactionInfo.is_for,
-                quantity: transactionInfo.quantity,
-                price: transactionInfo.payment_amount,
-                receiver: transactionInfo.receiver,
-            }).concat(`\n\n⚠️ Error: ${e.toString()}`);
-
-            await helpersTelegram.sendMessageToUser(
-                GROUP_ID,
-                adminText,
-            );
-        }
+        return this.#processPayment(transactionInfo, ctx.i18n.t, payment_method, tg_payment_id, ctx);
     }
 
-
+    /**
+     * Accept Click payment
+     */
     async acceptPaymentClick(trans_id) {
-        let transactionInfo = await serviceTransaction.readWithUserInfo(trans_id);
-        if (!transactionInfo || transactionInfo.is_done === 1) {
-            return;
-        }
+        const transactionInfo = await serviceTransaction.readWithUserInfo(trans_id);
+        if (!transactionInfo || transactionInfo.is_done === 1) return;
 
-        try {
-            let result;
-            await serviceTransaction.updateOneById(trans_id, {
-                payment_method: paymentMethods.CLICK,
-                is_paid: true,
-                paid_at: db.fn.now(),
-            });
+        const userLang = transactionInfo.lang || DEFAULT_LANGUAGE;
+        const t = (key, vars) => translator.t(userLang, key, vars);
 
-            // Get user's language
-            const userLang = transactionInfo.lang || DEFAULT_LANGUAGE;
-
-            // Process payment based on type
-            if (transactionInfo.is_for === productTypes.STARS) {
-                result = await this.#paymentForStars(
-                    (key, vars) => translator.t(userLang, key, vars),
-                    transactionInfo,
-                );
-            } else {
-                result = await this.#paymentForPremium(
-                    (key, vars) => translator.t(userLang, key, vars),
-                    transactionInfo,
-                );
-            }
-
-            const {resp, message} = result;
-
-            const data = {
-                transaction_id: resp.transaction_id || null,
-                is_done: false,
-            };
-
-            if (resp.ok) {
-                data['is_done'] = true;
-                data['done_at'] = db.fn.now();
-            }
-
-            // Send result to user
-            await helpersTelegram.sendMessageToUser(
-                transactionInfo.chat_id,
-                message,
-            );
-
-            // Delete payment message
-            await helpersTelegram.deleteMessage(
-                transactionInfo.chat_id,
-                transactionInfo.user_message_id,
-            ).catch(e => logError(e.toString()));
-
-            // Update transaction
-            await serviceTransaction.updateOneById(trans_id, data);
-            transactionInfo = await serviceTransaction.readWithUserInfo(trans_id);
-
-            // Send order notification to channel (in group language)
-            await helpersTelegram.sendOrderToChannel(
-                (key, vars) => translator.t(GROUP_MESSAGES_LANGUAGE, key, vars),
-                transactionInfo,
-                data['is_done'] ? statuses.SUCCESS : statuses.FAILED,
-                true,
-            );
-
-            return true;
-
-        } catch (e) {
-            logError(e.toString());
-
-            const userLang = transactionInfo?.lang || DEFAULT_LANGUAGE;
-
-            // Send error message to user
-            const text = translator.t(userLang, 'failed_purchase_text_for_user');
-            await helpersTelegram.sendMessageToUser(
-                transactionInfo.chat_id,
-                text,
-            );
-
-            // Send detailed error to admin group
-            const adminText = translator.t(GROUP_MESSAGES_LANGUAGE, 'failed_purchase_text_for_admin', {
-                trans_id: transactionInfo.id,
-                buyer_id: transactionInfo.user_id,
-                buyer_name: [
-                    transactionInfo.first_name,
-                    transactionInfo.last_name,
-                    transactionInfo.username,
-                ].filter(Boolean).join(' '),
-                order: transactionInfo.is_for,
-                quantity: transactionInfo.quantity,
-                price: transactionInfo.payment_amount,
-                receiver: transactionInfo.receiver,
-            }).concat(`\n\n⚠️ Error: ${e.toString()}`);
-
-            await helpersTelegram.sendMessageToUser(
-                GROUP_ID,
-                adminText,
-            );
-            return false;
-        }
+        return this.#processPayment(transactionInfo, t, paymentMethods.CLICK);
     }
 }
 
