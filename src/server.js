@@ -7,6 +7,7 @@ const UzumbankController = require('./paymentIntegrations/uzumbank/controller');
 const uzumbankController = new UzumbankController();
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
 app.use('/api/v1/payment/uzumbank', uzumbankRoute);

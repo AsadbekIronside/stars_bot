@@ -1,8 +1,8 @@
 const serviceClickTransaction = require('../../service/service.clickTransactions');
-const {statusTypes} = require('./enum');
+const { statusTypes } = require('./enum');
 const dayjs = require('dayjs');
 const paymentController = require('../../controller/controller.payment');
-const {logError} = require('../../logs/logs');
+const { logError } = require('../../logs/logs');
 
 class ClickPaymentController {
     static ERROR_CODES = {
