@@ -71,7 +71,6 @@ class ClickPaymentController {
             return false;
         }
 
-        console.log(transaction, amount)
         if (transaction.payment_amount !== amount) {
             this._sendError(res, ClickPaymentController.ERROR_CODES.INVALID_PAYMENT_AMOUNT, 'Invalid payment amount');
             return false;

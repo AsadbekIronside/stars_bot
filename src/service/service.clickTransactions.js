@@ -12,6 +12,7 @@ class ClickTransactionsService extends ServiceBase {
             .select(
                 'a.is_paid',
                 'a.is_done',
+                'a.payment_amount',
                 'b.*',
             )
             .from({a: dbTables.USER_TRANSACTIONS})
